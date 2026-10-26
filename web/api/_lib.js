@@ -130,7 +130,7 @@ async function askGemini(system, prompt, maxTokens) {
         generationConfig: { maxOutputTokens: maxTokens * 3 } // deja margen por si el modelo razona antes de responder
       })
     });
-    if (!r.ok) return { text: null, error: await describeFailure("gemini", r) };
+    if (!r.ok) return { text: null, error: await describeFailure("gemini/" + model, r) };
     const j = await r.json();
     const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
     const text = parts.map((p) => p.text || "").join("").trim();
