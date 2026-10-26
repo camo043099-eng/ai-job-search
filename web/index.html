@@ -138,6 +138,18 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
 .analysis p { margin: 0; color: var(--muted); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 6px; font-weight: 500; z-index: 20; }
 
+.gates { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.gate { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gate span { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.gate p { font-size: 13px; overflow-wrap: anywhere; }
+.gate.pasa span { color: var(--good); }
+.gate.revisar span { color: var(--warn); }
+.gate.falla { border-color: var(--warn); }
+.gate.falla span { color: var(--warn); }
+.dim { display: flex; flex-direction: column; gap: 4px; }
+.dim-head { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; }
+.dim p { font-size: 13px; }
+.alist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 @media (max-width: 959px) {
   .seg { display: flex; }
   .app { grid-template-columns: minmax(0, 1fr); }
@@ -157,7 +169,7 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
   .app .preview { display: block !important; position: static; }
   .panel { display: none !important; }
   .panel.is-active { display: block !important; }
-  .panel[data-panel="analisis"] { display: none !important; }
+  .panel[data-panel="analisis"], .panel[data-panel="evaluar"] { display: none !important; }
   .sheet { box-shadow: none; padding: 0; }
   mark { background: none; color: inherit; padding: 0; }
 }
@@ -218,6 +230,14 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
       </div>
 
       <div class="card">
+        <h2>Para evaluar ofertas</h2>
+        <p class="hint">Opcional. Mejora la pestaña "¿Me conviene?".</p>
+        <label>Qué buscas en tu próximo trabajo<textarea id="f-metas" data-bind="perfil.metas" rows="2"></textarea></label>
+        <label>Nacionalidad y permiso de trabajo<input id="f-permiso" data-bind="perfil.permiso"></label>
+        <label>Ciudades o modalidad que aceptas<input id="f-ubicacion" data-bind="perfil.ubicacion"></label>
+      </div>
+
+      <div class="card">
         <h2>La oferta</h2>
         <div class="grid2">
           <label>Cargo al que aplicas<input id="o-cargo" data-bind="oferta.cargo"></label>
@@ -234,6 +254,7 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
           <button type="button" role="tab" id="tab-cv" data-tab="cv" aria-selected="true">Hoja de vida</button>
           <button type="button" role="tab" id="tab-carta" data-tab="carta" aria-selected="false">Carta</button>
           <button type="button" role="tab" id="tab-analisis" data-tab="analisis" aria-selected="false">Coincidencias</button>
+          <!--EV_START--><button type="button" role="tab" id="tab-evaluar" data-tab="evaluar" aria-selected="false">¿Me conviene?</button><!--EV_END-->
         </div>
         <div class="actions">
           <button class="btn" type="button" id="btn-copy">Copiar texto</button>
@@ -262,6 +283,21 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
       </div>
 
       <div class="panel" data-panel="analisis"><div class="card analysis" id="analisis"></div></div>
+
+      <!--EV_START-->
+      <div class="panel" data-panel="evaluar">
+        <div class="card analysis">
+          <p>Evalúa si esta oferta encaja contigo: requisitos que debes cumplir, puntaje por área y qué preguntar antes de aplicar.</p>
+          <label style="flex-direction:row;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--muted)">
+            <input type="checkbox" id="ev-consent" style="width:auto;margin-top:3px">
+            <span>Autorizo enviar los datos de este formulario a Claude (Anthropic) solo para evaluar esta oferta. Esta página no los guarda.</span>
+          </label>
+          <div><button class="btn primary" type="button" id="btn-eval">Evaluar esta oferta</button></div>
+          <p id="ev-status" role="status" style="font-size:13px"></p>
+          <div id="ev-result" class="analysis"></div>
+        </div>
+      </div>
+      <!--EV_END-->
     </section>
   </main>
 </div>
@@ -291,7 +327,10 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
         telefono: "+57 300 000 0000", ciudad: "Bogotá, Colombia", enlace: "linkedin.com/in/laura-gomez-ejemplo",
         resumen: "Analista de datos con 4 años de experiencia convirtiendo información comercial en tableros y recomendaciones para equipos de ventas y operaciones.",
         habilidades: "Excel avanzado, SQL, Python, Power BI, Comunicación, Trabajo en equipo",
-        idiomas: "Español (nativo), Inglés (B2)"
+        idiomas: "Español (nativo), Inglés (B2)",
+        metas: "Crecer hacia ciencia de datos y trabajar con equipos que usen los análisis para decidir.",
+        permiso: "Colombiana, sin restricciones para trabajar en Colombia.",
+        ubicacion: "Bogotá, presencial o híbrido."
       },
       exp: [
         { cargo: "Analista de datos", empresa: "Comercial Andina S.A.S.", periodo: "2022 - Actual",
@@ -309,7 +348,7 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
   function empty() {
     return {
       example: false, carta: "", cartaEdited: false,
-      perfil: { nombre: "", cargo: "", email: "", telefono: "", ciudad: "", enlace: "", resumen: "", habilidades: "", idiomas: "" },
+      perfil: { nombre: "", cargo: "", email: "", telefono: "", ciudad: "", enlace: "", resumen: "", habilidades: "", idiomas: "", metas: "", permiso: "", ubicacion: "" },
       exp: [{ cargo: "", empresa: "", periodo: "", logros: "" }],
       edu: [{ titulo: "", institucion: "", periodo: "" }],
       oferta: { cargo: "", empresa: "", reclutador: "", texto: "" }
@@ -603,7 +642,7 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
   });
   var pr = $("btn-print"); if (pr) pr.addEventListener("click", function () {
     var active = document.querySelector(".panel.is-active").getAttribute("data-panel");
-    if (active === "analisis") setTab("cv");
+    if (active === "analisis" || active === "evaluar") setTab("cv");
     window.print();
   });
 
@@ -624,6 +663,50 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
     }).catch(function (e) {
       st.textContent = e.message || "No se pudo redactar. Intenta de nuevo.";
     }).then(function () { aiBtn.disabled = false; });
+  });
+
+  var GATE_LABEL = { PASA: "Pasa", FALLA: "No cumples", REVISAR: "Revisar" };
+  var GATE_NAME = { elegibilidad: "Elegibilidad", idioma: "Idioma", ubicacion: "Ubicación" };
+  var DIM_NAME = { tecnica: "Habilidades técnicas", experiencia: "Experiencia", cultura: "Cultura (según la oferta)", alineacion: "Alineación con tus metas" };
+  function renderEval(r) {
+    var h = '<div class="gates">' + Object.keys(GATE_NAME).map(function (k) {
+      var g = r.puertas[k];
+      return '<div class="gate ' + esc(g.veredicto.toLowerCase()) + '"><strong>' + GATE_NAME[k] + "</strong><span>" + esc(GATE_LABEL[g.veredicto] || g.veredicto) + "</span>" + (g.nota ? "<p>" + esc(g.nota) + "</p>" : "") + "</div>";
+    }).join("") + "</div>";
+    if (r.puntaje == null) {
+      h += "<div><h3>" + esc(r.veredicto) + "</h3><p>No se calculó un puntaje. Revisa las notas de arriba; si conoces tu situación mejor que lo escrito en el formulario, corrígela y evalúa de nuevo.</p></div>";
+    } else {
+      h += '<div><div class="big">' + r.puntaje + '<span style="font-size:18px;font-weight:600"> / 100</span></div><h3>' + esc(r.veredicto) + "</h3></div>";
+      h += Object.keys(DIM_NAME).map(function (k) {
+        var d = r.dimensiones[k];
+        return '<div class="dim"><div class="dim-head"><span>' + DIM_NAME[k] + "</span><span>" + d.puntaje + '</span></div><div class="meter" role="img" aria-label="' + esc(DIM_NAME[k]) + " " + d.puntaje + ' de 100"><div style="width:' + d.puntaje + '%"></div></div>' + (d.nota ? "<p>" + esc(d.nota) + "</p>" : "") + "</div>";
+      }).join("");
+    }
+    function block(title, items) {
+      return items.length ? "<div><h3>" + title + '</h3><ul class="alist">' + items.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul></div>" : "";
+    }
+    h += block("Tus puntos fuertes", r.fortalezas);
+    h += block("Brechas por revisar", r.brechas);
+    if (r.recomendacion) h += "<div><h3>Recomendación</h3><p>" + esc(r.recomendacion) + "</p></div>";
+    if (r.llamar && r.llamar.sugerir) h += block("Antes de aplicar, pregunta", r.llamar.preguntas);
+    $("ev-result").innerHTML = h;
+  }
+  var evBtn = $("btn-eval");
+  if (evBtn) evBtn.addEventListener("click", function () {
+    var st = $("ev-status");
+    if (!$("ev-consent").checked) { st.textContent = "Marca la autorización para continuar."; return; }
+    if (!(state.oferta.texto || "").trim()) { st.textContent = "Pega primero el texto de la oferta."; return; }
+    evBtn.disabled = true; st.textContent = "Evaluando...";
+    fetch("/api/evaluar", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ perfil: state.perfil, exp: state.exp, edu: state.edu, oferta: state.oferta })
+    }).then(function (r) {
+      return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "No se pudo evaluar."); return j; });
+    }).then(function (j) {
+      renderEval(j); st.textContent = "";
+    }).catch(function (e) {
+      st.textContent = e.message || "No se pudo evaluar. Intenta de nuevo.";
+    }).then(function () { evBtn.disabled = false; });
   });
 
   fillForm(); analyze(); renderCV(); renderAnalysis();
