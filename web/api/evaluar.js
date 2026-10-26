@@ -101,9 +101,10 @@ module.exports = async function handler(req, res) {
   const ctx = prepare(req, res);
   if (!ctx) return;
   const prompt = candidateBlock(ctx.body) + "\n\n" + offerBlock(ctx.body.oferta) + "\n\nEvalúa el encaje y responde solo con el JSON.";
-  const text = await askAI(SYSTEM, prompt, 1400);
-  const result = text ? shape(parseJson(text)) : null;
-  if (!result) return res.status(502).json({ error: "No se pudo evaluar. Intenta de nuevo." });
+  const out = await askAI(SYSTEM, prompt, 1400);
+  if (!out.text) return res.status(502).json({ error: "No se pudo evaluar (" + out.error + ")" });
+  const result = shape(parseJson(out.text));
+  if (!result) return res.status(502).json({ error: "No se pudo evaluar (la respuesta de la IA no tuvo el formato esperado)" });
   return res.status(200).json(result);
 };
 

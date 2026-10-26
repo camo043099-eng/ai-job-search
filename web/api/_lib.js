@@ -101,7 +101,19 @@ function provider() {
   return process.env.ANTHROPIC_API_KEY ? "anthropic" : "gemini";
 }
 
-// Devuelve el texto de la respuesta o null si falla.
+// Resume un error del proveedor sin exponer claves: nombre, código HTTP y un mensaje corto.
+async function describeFailure(name, r) {
+  let msg = "";
+  try {
+    const t = await r.text();
+    try { const j = JSON.parse(t); msg = (j.error && (j.error.message || j.error.status)) || ""; } catch (e) { msg = t; }
+  } catch (e) { /* sin cuerpo */ }
+  msg = cut(String(msg).replace(/\s+/g, " "), 160);
+  console.error("[ia] " + name + " HTTP " + r.status + " " + msg);
+  return name + " " + r.status + (msg ? ": " + msg : "");
+}
+
+// Devuelve { text, error }: text con la respuesta, o error con un resumen si falla.
 async function askAI(system, prompt, maxTokens) {
   return provider() === "gemini" ? askGemini(system, prompt, maxTokens) : askClaude(system, prompt, maxTokens);
 }
@@ -118,13 +130,19 @@ async function askGemini(system, prompt, maxTokens) {
         generationConfig: { maxOutputTokens: maxTokens * 3 } // deja margen por si el modelo razona antes de responder
       })
     });
-    if (!r.ok) return null;
+    if (!r.ok) return { text: null, error: await describeFailure("gemini", r) };
     const j = await r.json();
     const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
     const text = parts.map((p) => p.text || "").join("").trim();
-    return text || null;
+    if (!text) {
+      const why = (j.candidates && j.candidates[0] && j.candidates[0].finishReason) || (j.promptFeedback && j.promptFeedback.blockReason) || "sin texto";
+      console.error("[ia] gemini respuesta vacía: " + why);
+      return { text: null, error: "gemini respuesta vacía (" + cut(why, 60) + ")" };
+    }
+    return { text, error: null };
   } catch (e) {
-    return null;
+    console.error("[ia] gemini fallo de red: " + cut(e && e.message, 120));
+    return { text: null, error: "gemini sin conexión" };
   }
 }
 
@@ -140,12 +158,14 @@ async function askClaude(system, prompt, maxTokens) {
         messages: [{ role: "user", content: prompt }]
       })
     });
-    if (!r.ok) return null;
+    if (!r.ok) return { text: null, error: await describeFailure("claude", r) };
     const j = await r.json();
     const text = (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("").trim();
-    return text || null;
+    if (!text) return { text: null, error: "claude respuesta vacía" };
+    return { text, error: null };
   } catch (e) {
-    return null;
+    console.error("[ia] claude fallo de red: " + cut(e && e.message, 120));
+    return { text: null, error: "claude sin conexión" };
   }
 }
 

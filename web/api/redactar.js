@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
   const ctx = prepare(req, res);
   if (!ctx) return;
   const prompt = candidateBlock(ctx.body) + "\n\n" + offerBlock(ctx.body.oferta) + "\n\nRedacta la carta de presentación.";
-  const carta = await askAI(SYSTEM, prompt, 900);
-  if (!carta) return res.status(502).json({ error: "No se pudo redactar. Intenta de nuevo." });
-  return res.status(200).json({ carta });
+  const out = await askAI(SYSTEM, prompt, 900);
+  if (!out.text) return res.status(502).json({ error: "No se pudo redactar (" + out.error + ")" });
+  return res.status(200).json({ carta: out.text });
 };
