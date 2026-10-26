@@ -91,6 +91,7 @@ input, textarea {
   color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%; min-width: 0;
 }
 textarea { resize: vertical; min-height: 84px; }
+input[type="checkbox"] { -webkit-appearance: checkbox; appearance: auto; width: 22px; height: 22px; min-width: 22px; padding: 0; margin: 0; flex: none; accent-color: var(--accent); }
 .rep { border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .rep-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; color: var(--muted); }
 .full { grid-column: 1 / -1; }
@@ -273,7 +274,7 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
         <div class="card" style="margin-top:12px">
           <h3 style="font-size:15px">Redactar con IA</h3>
           <label style="flex-direction:row;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--muted)">
-            <input type="checkbox" id="ai-consent" style="width:auto;margin-top:3px">
+            <input type="checkbox" id="ai-consent">
             <span>Autorizo enviar los datos de este formulario a un servicio de IA (Claude de Anthropic o Gemini de Google) solo para redactar mi carta. Esta página no los guarda.</span>
           </label>
           <div><button class="btn primary" type="button" id="btn-ai">Redactar con IA</button></div>
@@ -289,7 +290,7 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
         <div class="card analysis">
           <p>Evalúa si esta oferta encaja contigo: requisitos que debes cumplir, puntaje por área y qué preguntar antes de aplicar.</p>
           <label style="flex-direction:row;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--muted)">
-            <input type="checkbox" id="ev-consent" style="width:auto;margin-top:3px">
+            <input type="checkbox" id="ev-consent">
             <span>Autorizo enviar los datos de este formulario a un servicio de IA (Claude de Anthropic o Gemini de Google) solo para evaluar esta oferta. Esta página no los guarda.</span>
           </label>
           <div><button class="btn primary" type="button" id="btn-eval">Evaluar esta oferta</button></div>
