@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Hoja a la Medida</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+/* Layout: formulario a la izquierda, documento vivo a la derecha; en teléfono se alternan con un selector. */
+:root {
+  --bg: #EDF0EF;
+  --surface: #FFFFFF;
+  --ink: #16222B;
+  --muted: #5A6A72;
+  --line: #D3DBDA;
+  --accent: #1F3A5F;
+  --accent-ink: #FFFFFF;
+  --good: #1E7A4F;
+  --warn: #A24A08;
+  --mark: #F7D154;
+  --mark-ink: #16222B;
+  --sheet: #FFFFFF;
+  --sheet-ink: #1B1F23;
+  --sheet-muted: #5B646B;
+  --sheet-line: #CFD6DA;
+  --sheet-accent: #1F3A5F;
+  --shadow: 0 1px 2px rgba(22,34,43,.08), 0 8px 24px rgba(22,34,43,.08);
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-doc: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F171C; --surface: #172229; --ink: #E6EDEF; --muted: #93A4AB; --line: #2A3A42;
+    --accent: #8FB4E8; --accent-ink: #0F171C; --good: #5FC28F; --warn: #F0A25F;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F171C; --surface: #172229; --ink: #E6EDEF; --muted: #93A4AB; --line: #2A3A42;
+  --accent: #8FB4E8; --accent-ink: #0F171C; --good: #5FC28F; --warn: #F0A25F;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+.topbar { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.topbar h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -0.01em; }
+.topbar p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+.notice {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px;
+}
+.notice span { flex: 1 1 260px; min-width: 0; }
+.seg { display: none; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px; }
+.seg button { flex: 1; }
+
+button { font: inherit; cursor: pointer; }
+.btn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  padding: 8px 14px; border-radius: 6px; font-weight: 500;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.seg .btn { border-color: transparent; background: transparent; }
+.seg .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
+.form { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card > h2 { font-size: 18px; font-weight: 600; }
+.card > .hint { margin: -6px 0 0; color: var(--muted); font-size: 13px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); min-width: 0; }
+input, textarea {
+  font: inherit; font-size: 15px; letter-spacing: 0; text-transform: none; font-weight: 400;
+  color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 84px; }
+.rep { border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.rep-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; color: var(--muted); }
+.full { grid-column: 1 / -1; }
+
+.preview { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); padding: 8px 12px; font-weight: 600; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.panel { display: none; }
+.panel.is-active { display: block; }
+
+.sheet {
+  background: var(--sheet); color: var(--sheet-ink); box-shadow: var(--shadow);
+  font-family: var(--font-doc); font-size: 14.5px; line-height: 1.5;
+  padding: 36px 40px; border-radius: 2px; min-width: 0; overflow-wrap: anywhere;
+}
+.sheet h2 { font-family: var(--font-display); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--sheet-accent); border-bottom: 1px solid var(--sheet-line); padding-bottom: 3px; margin: 18px 0 8px; }
+.sheet .name { font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1.1; margin: 0; color: var(--sheet-ink); }
+.sheet .role { font-size: 16px; color: var(--sheet-accent); margin: 2px 0 6px; font-weight: 600; }
+.sheet .contact { color: var(--sheet-muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 2px 14px; }
+.sheet .job { margin-bottom: 12px; }
+.sheet .job-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-weight: 600; }
+.sheet .job-head span:last-child { font-weight: 400; color: var(--sheet-muted); }
+.sheet .org { font-style: italic; color: var(--sheet-muted); }
+.sheet ul { margin: 4px 0 0; padding-left: 18px; }
+.sheet li { margin-bottom: 2px; }
+.sheet p { margin: 0 0 10px; }
+.sheet .empty { color: var(--sheet-muted); font-style: italic; }
+mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-radius: 2px; }
+.letter { min-height: 360px; outline: none; }
+.letter p { margin: 0 0 12px; white-space: pre-line; }
+.letter:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.meter { height: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.meter > div { height: 100%; background: var(--good); }
+.big { font-family: var(--font-display); font-size: 40px; font-weight: 700; line-height: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; list-style: none; }
+.chip { padding: 3px 10px; border-radius: 999px; font-size: 13px; border: 1px solid var(--line); background: var(--bg); }
+.chip.hit { background: var(--mark); color: var(--mark-ink); border-color: var(--mark); }
+.chip.miss { border-style: dashed; color: var(--warn); border-color: var(--warn); background: transparent; }
+.analysis { display: flex; flex-direction: column; gap: 14px; }
+.analysis h3 { font-size: 15px; font-weight: 600; }
+.analysis p { margin: 0; color: var(--muted); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 6px; font-weight: 500; z-index: 20; }
+
+@media (max-width: 959px) {
+  .seg { display: flex; }
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .app[data-pane="datos"] .preview { display: none; }
+  .app[data-pane="docs"] .form { display: none; }
+  .preview { position: static; }
+}
+@media (max-width: 520px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .sheet { padding: 22px 18px; }
+  .sheet .name { font-size: 25px; }
+}
+@media print {
+  body { background: #fff; padding: 0; }
+  .topbar, .notice, .seg, .toolbar, .form, .toast { display: none !important; }
+  .app { display: block; }
+  .app .preview { display: block !important; position: static; }
+  .panel { display: none !important; }
+  .panel.is-active { display: block !important; }
+  .panel[data-panel="analisis"] { display: none !important; }
+  .sheet { box-shadow: none; padding: 0; }
+  mark { background: none; color: inherit; padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div>
+      <h1>Hoja a la Medida</h1>
+      <p>Pega una oferta de empleo y mira cómo tu hoja de vida y tu carta se ajustan a ella, usando solo lo que tú escribes.</p>
+    </div>
+  </header>
+
+  <div class="notice" id="notice" hidden>
+    <span>Estás viendo datos de ejemplo. Cámbialos por los tuyos o empieza desde cero.</span>
+    <button class="btn small" id="btn-clear" type="button">Empezar con mis datos</button>
+  </div>
+
+  <div class="seg" role="group" aria-label="Vista">
+    <button class="btn" type="button" data-pane="datos" aria-pressed="true">Mis datos</button>
+    <button class="btn" type="button" data-pane="docs" aria-pressed="false">Documentos</button>
+  </div>
+
+  <main class="app" id="app" data-pane="datos">
+    <section class="form" aria-label="Formulario">
+      <div class="card">
+        <h2>Datos personales</h2>
+        <div class="grid2">
+          <label>Nombre completo<input id="f-nombre" data-bind="perfil.nombre" autocomplete="name"></label>
+          <label>Titular profesional<input id="f-cargo" data-bind="perfil.cargo" placeholder="Ej.: Contadora pública"></label>
+          <label>Correo<input id="f-email" data-bind="perfil.email" type="email" autocomplete="email"></label>
+          <label>Teléfono<input id="f-tel" data-bind="perfil.telefono" type="tel" autocomplete="tel"></label>
+          <label>Ciudad<input id="f-ciudad" data-bind="perfil.ciudad" autocomplete="address-level2"></label>
+          <label>LinkedIn o portafolio<input id="f-enlace" data-bind="perfil.enlace"></label>
+          <label class="full">Perfil profesional<textarea id="f-resumen" data-bind="perfil.resumen" rows="3"></textarea></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Experiencia</h2>
+        <p class="hint">Escribe un logro por línea. La página los reordena según la oferta, sin cambiar tu texto.</p>
+        <div id="exp-list"></div>
+        <button class="btn" type="button" id="add-exp">Agregar experiencia</button>
+      </div>
+
+      <div class="card">
+        <h2>Educación</h2>
+        <div id="edu-list"></div>
+        <button class="btn" type="button" id="add-edu">Agregar estudio</button>
+      </div>
+
+      <div class="card">
+        <h2>Habilidades e idiomas</h2>
+        <label>Habilidades (separadas por comas)<textarea id="f-hab" data-bind="perfil.habilidades" rows="2"></textarea></label>
+        <label>Idiomas<input id="f-idiomas" data-bind="perfil.idiomas"></label>
+      </div>
+
+      <div class="card">
+        <h2>La oferta</h2>
+        <div class="grid2">
+          <label>Cargo al que aplicas<input id="o-cargo" data-bind="oferta.cargo"></label>
+          <label>Empresa<input id="o-empresa" data-bind="oferta.empresa"></label>
+          <label class="full">Nombre de quien recibe (opcional)<input id="o-reclutador" data-bind="oferta.reclutador"></label>
+          <label class="full">Texto de la oferta<textarea id="o-texto" data-bind="oferta.texto" rows="8" placeholder="Pega aquí la oferta completa"></textarea></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview" aria-label="Documentos">
+      <div class="toolbar">
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" id="tab-cv" data-tab="cv" aria-selected="true">Hoja de vida</button>
+          <button type="button" role="tab" id="tab-carta" data-tab="carta" aria-selected="false">Carta</button>
+          <button type="button" role="tab" id="tab-analisis" data-tab="analisis" aria-selected="false">Coincidencias</button>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button" id="btn-copy">Copiar texto</button>
+          <!--PRINT_START--><button class="btn primary" type="button" id="btn-print">Descargar PDF</button><!--PRINT_END-->
+        </div>
+      </div>
+
+      <div class="panel is-active" data-panel="cv"><article class="sheet" id="cv"></article></div>
+
+      <div class="panel" data-panel="carta">
+        <div class="sheet">
+          <div class="letter" id="carta" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Carta de presentación editable"></div>
+        </div>
+        <p style="margin:8px 0 0"><button class="btn small ghost" type="button" id="btn-regen">Redactar de nuevo</button></p>
+      </div>
+
+      <div class="panel" data-panel="analisis"><div class="card analysis" id="analisis"></div></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "hoja-a-la-medida-v1";
+  var $ = function (id) { return document.getElementById(id); };
+  var norm = function (s) { return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); };
+  var esc = function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  };
+  var escRe = function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+
+  var STOP = new Set(("a al algo ante antes aquel como con contra cual cuando de del desde donde dos el ella ellos en entre era es esta estan este esto estos fue ha han hasta hay la las le les lo los mas me mi muy no nos nuestra nuestro o otra otro para pero por porque que quien se sea ser si sin sobre su sus tambien tanto te tener tiene tu un una uno unos y ya buscamos busca requisitos requerimos funciones oferta cargo puesto vacante empresa equipo trabajo experiencia anos ano minimo minima deseable deseables conocimientos conocimiento capacidad habilidad habilidades manejo nivel formacion estudios profesional persona personas area areas apoyo realizar realizacion responsable responsabilidades principales ofrecemos ofrece contrato salario horario modalidad ciudad tiempo completo cada todas todos todo bien buen buena buenas buenos mejor gran grande nuevo nueva estar podra puede pueden debe deben asi dentro fuera durante mediante segun parte partes forma tipo valora valoran se").split(/\s+/));
+  var SHORT = new Set(["sql", "bi", "sap", "erp", "crm", "aws", "seo", "ux", "ui", "api", "git", "vba", "ia", "ai", "b2b", "b2c", "kpi", "css", "php", "net"]);
+
+  function example() {
+    return {
+      example: true, carta: "", cartaEdited: false,
+      perfil: {
+        nombre: "Laura Gómez Rincón", cargo: "Analista de datos", email: "laura.gomez@ejemplo.com",
+        telefono: "+57 300 000 0000", ciudad: "Bogotá, Colombia", enlace: "linkedin.com/in/laura-gomez-ejemplo",
+        resumen: "Analista de datos con 4 años de experiencia convirtiendo información comercial en tableros y recomendaciones para equipos de ventas y operaciones.",
+        habilidades: "Excel avanzado, SQL, Python, Power BI, Comunicación, Trabajo en equipo",
+        idiomas: "Español (nativo), Inglés (B2)"
+      },
+      exp: [
+        { cargo: "Analista de datos", empresa: "Comercial Andina S.A.S.", periodo: "2022 - Actual",
+          logros: "Construí tableros en Power BI que redujeron de 3 días a 2 horas el reporte semanal de ventas.\nAutomaticé la limpieza de datos con Python y SQL para 12 sucursales.\nCoordiné capacitaciones sobre indicadores para el equipo comercial." },
+        { cargo: "Auxiliar de inteligencia de negocios", empresa: "Distribuciones El Faro", periodo: "2020 - 2022",
+          logros: "Elaboré reportes en Excel con tablas dinámicas para la gerencia.\nDepuré bases de clientes y mejoré la calidad de los datos de contacto." }
+      ],
+      edu: [{ titulo: "Profesional en Estadística", institucion: "Universidad Nacional de Colombia", periodo: "2015 - 2020" }],
+      oferta: {
+        cargo: "Analista de Inteligencia de Negocios", empresa: "Empresa de ejemplo S.A.", reclutador: "",
+        texto: "Buscamos un Analista de Inteligencia de Negocios para apoyar a la gerencia comercial. Requisitos: experiencia de 2 años en análisis de datos, dominio de SQL y Power BI, Excel avanzado, conocimientos de Python, capacidad para comunicar hallazgos a equipos no técnicos. Se valora experiencia con Tableau y modelos de pronóstico de ventas."
+      }
+    };
+  }
+  function empty() {
+    return {
+      example: false, carta: "", cartaEdited: false,
+      perfil: { nombre: "", cargo: "", email: "", telefono: "", ciudad: "", enlace: "", resumen: "", habilidades: "", idiomas: "" },
+      exp: [{ cargo: "", empresa: "", periodo: "", logros: "" }],
+      edu: [{ titulo: "", institucion: "", periodo: "" }],
+      oferta: { cargo: "", empresa: "", reclutador: "", texto: "" }
+    };
+  }
+
+  var state = example();
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) { var parsed = JSON.parse(saved); if (parsed && parsed.perfil && parsed.oferta) state = parsed; }
+  } catch (e) { /* sin almacenamiento: se usa el ejemplo */ }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignorar */ } }
+
+  /* ---------- análisis de la oferta ---------- */
+  var A = { terms: [], stems: [], matched: [], missing: [], offerNorm: "" };
+
+  function stemOf(n) {
+    if (n.length >= 7) return n.slice(0, n.length - 2);
+    if (n.length >= 5) return n.slice(0, n.length - 1);
+    return n;
+  }
+  function extractTerms(text) {
+    var words = text.match(/[\p{L}\p{N}+#]+/gu) || [];
+    var freq = new Map();
+    words.forEach(function (w, i) {
+      var n = norm(w);
+      var ok = (n.length >= 4 && !STOP.has(n) && !/^\d+$/.test(n)) || SHORT.has(n);
+      if (!ok) return;
+      var e = freq.get(n) || { n: n, label: w, c: 0, first: i };
+      e.c++; freq.set(n, e);
+    });
+    return Array.from(freq.values()).sort(function (a, b) { return b.c - a.c || a.first - b.first; }).slice(0, 16);
+  }
+  function profileText() {
+    var p = state.perfil;
+    var parts = [p.cargo, p.resumen, p.habilidades, p.idiomas];
+    state.exp.forEach(function (x) { parts.push(x.cargo, x.empresa, x.logros); });
+    state.edu.forEach(function (x) { parts.push(x.titulo, x.institucion); });
+    return norm(parts.join(" \n "));
+  }
+  function inProfile(profileNorm, stem) {
+    return new RegExp("(^|[^a-z0-9])" + escRe(stem)).test(profileNorm);
+  }
+  function analyze() {
+    var text = state.oferta.texto || "";
+    A.offerNorm = norm(text);
+    A.terms = extractTerms(text);
+    A.stems = A.terms.map(function (t) { return stemOf(t.n); });
+    var pn = profileText();
+    A.matched = []; A.missing = [];
+    A.terms.forEach(function (t, i) { (inProfile(pn, A.stems[i]) ? A.matched : A.missing).push(t); });
+  }
+  function isHit(w) {
+    var n = norm(w);
+    if (n.length < 3) return false;
+    return A.stems.some(function (s) { return n.startsWith(s) && n.length <= s.length + 3; });
+  }
+  function hl(text) {
+    var re = /[\p{L}\p{N}+#]+/gu, out = "", last = 0, m;
+    while ((m = re.exec(text))) {
+      out += esc(text.slice(last, m.index));
+      out += isHit(m[0]) ? "<mark>" + esc(m[0]) + "</mark>" : esc(m[0]);
+      last = m.index + m[0].length;
+    }
+    return out + esc(text.slice(last));
+  }
+  function score(line) {
+    var words = line.match(/[\p{L}\p{N}+#]+/gu) || [];
+    return words.filter(isHit).length;
+  }
+  function skillList() {
+    var items = (state.perfil.habilidades || "").split(/[,;\n]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+    var tagged = items.map(function (s, i) {
+      var ns = norm(s);
+      var hit = (A.offerNorm && A.offerNorm.indexOf(ns) !== -1) || ns.split(/\s+/).some(function (w) { return w.length >= 3 && isHit(w); });
+      return { s: s, hit: hit, i: i };
+    });
+    return tagged.sort(function (a, b) { return (b.hit - a.hit) || (a.i - b.i); });
+  }
+  function bullets(exp) {
+    var lines = (exp.logros || "").split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+    return lines.map(function (l, i) { return { l: l, sc: score(l), i: i }; })
+      .sort(function (a, b) { return (b.sc - a.sc) || (a.i - b.i); });
+  }
+
+  /* ---------- hoja de vida ---------- */
+  function renderCV() {
+    var p = state.perfil, h = "";
+    h += '<h1 class="name">' + (p.nombre ? esc(p.nombre) : '<span class="empty">Tu nombre</span>') + "</h1>";
+    var role = state.oferta.cargo || p.cargo;
+    if (role) h += '<div class="role">' + esc(role) + "</div>";
+    var contact = [p.email, p.telefono, p.ciudad, p.enlace].filter(Boolean);
+    if (contact.length) h += '<div class="contact">' + contact.map(function (c) { return "<span>" + esc(c) + "</span>"; }).join("") + "</div>";
+    if (p.resumen) h += "<h2>Perfil</h2><p>" + hl(p.resumen) + "</p>";
+
+    var jobs = state.exp.filter(function (e) { return e.cargo || e.empresa || e.logros; });
+    if (jobs.length) {
+      h += "<h2>Experiencia</h2>";
+      jobs.forEach(function (e) {
+        h += '<div class="job"><div class="job-head"><span>' + hl(e.cargo) + "</span><span>" + esc(e.periodo) + "</span></div>";
+        if (e.empresa) h += '<div class="org">' + esc(e.empresa) + "</div>";
+        var bs = bullets(e);
+        if (bs.length) h += "<ul>" + bs.map(function (b) { return "<li>" + hl(b.l) + "</li>"; }).join("") + "</ul>";
+        h += "</div>";
+      });
+    }
+    var studies = state.edu.filter(function (e) { return e.titulo || e.institucion; });
+    if (studies.length) {
+      h += "<h2>Educación</h2>";
+      studies.forEach(function (e) {
+        h += '<div class="job"><div class="job-head"><span>' + hl(e.titulo) + "</span><span>" + esc(e.periodo) + "</span></div>";
+        if (e.institucion) h += '<div class="org">' + esc(e.institucion) + "</div>";
+        h += "</div>";
+      });
+    }
+    var sk = skillList();
+    if (sk.length) h += "<h2>Habilidades</h2><p>" + sk.map(function (x) { return x.hit ? "<mark>" + esc(x.s) + "</mark>" : esc(x.s); }).join(" · ") + "</p>";
+    if (p.idiomas) h += "<h2>Idiomas</h2><p>" + esc(p.idiomas) + "</p>";
+    $("cv").innerHTML = h;
+  }
+  function cvText() {
+    var p = state.perfil, L = [];
+    L.push(p.nombre);
+    var role = state.oferta.cargo || p.cargo; if (role) L.push(role);
+    var c = [p.email, p.telefono, p.ciudad, p.enlace].filter(Boolean).join(" | "); if (c) L.push(c);
+    if (p.resumen) L.push("", "PERFIL", p.resumen);
+    var jobs = state.exp.filter(function (e) { return e.cargo || e.empresa || e.logros; });
+    if (jobs.length) {
+      L.push("", "EXPERIENCIA");
+      jobs.forEach(function (e) {
+        L.push([e.cargo, e.empresa, e.periodo].filter(Boolean).join(" | "));
+        bullets(e).forEach(function (b) { L.push("- " + b.l); });
+        L.push("");
+      });
+    }
+    var studies = state.edu.filter(function (e) { return e.titulo || e.institucion; });
+    if (studies.length) { L.push("EDUCACIÓN"); studies.forEach(function (e) { L.push([e.titulo, e.institucion, e.periodo].filter(Boolean).join(" | ")); }); L.push(""); }
+    var sk = skillList(); if (sk.length) L.push("HABILIDADES", sk.map(function (x) { return x.s; }).join(", "), "");
+    if (p.idiomas) L.push("IDIOMAS", p.idiomas);
+    return L.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  /* ---------- carta ---------- */
+  function joinList(a) {
+    if (a.length <= 1) return a.join("");
+    return a.slice(0, -1).join(", ") + " y " + a[a.length - 1];
+  }
+  function buildLetter() {
+    var p = state.perfil, o = state.oferta;
+    var cargo = o.cargo || p.cargo || "el cargo disponible";
+    var fecha = new Date().toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+    var city = (p.ciudad || "").split(",")[0].trim();
+    var out = [];
+    out.push((city ? city + ", " : "") + fecha);
+    out.push(o.reclutador ? "Estimado/a " + o.reclutador + ":" : "Estimado equipo de selección:");
+
+    var p1 = "Me postulo al cargo de " + cargo + (o.empresa ? " en " + o.empresa : "") + ".";
+    if (p.cargo) p1 += " Mi trabajo es de " + p.cargo.charAt(0).toLowerCase() + p.cargo.slice(1) + (p.ciudad ? ", con base en " + p.ciudad : "") + ".";
+    out.push(p1);
+
+    var best = [];
+    state.exp.forEach(function (e) {
+      bullets(e).slice(0, 1).forEach(function (b) { best.push({ sc: b.sc, l: b.l, cargo: e.cargo, empresa: e.empresa }); });
+    });
+    best.sort(function (a, b) { return b.sc - a.sc; });
+    var picks = best.filter(function (b) { return b.l; }).slice(0, 2);
+    if (picks.length) {
+      out.push(picks.map(function (b) {
+        var where = b.empresa ? "En " + b.empresa : "En mi experiencia";
+        var who = b.cargo ? ", como " + b.cargo : "";
+        return where + who + ": " + b.l.replace(/[.\s]+$/, "") + ".";
+      }).join(" "));
+    }
+    var hits = skillList().filter(function (x) { return x.hit; }).slice(0, 4).map(function (x) { return x.s; });
+    if (hits.length) out.push("Mi experiencia incluye " + joinList(hits) + ", que corresponden a lo que describe la oferta.");
+
+    out.push("Quedo disponible para una conversación en la que pueda ampliar mi experiencia y conocer mejor las necesidades del equipo.");
+    out.push("Cordialmente,\n" + (p.nombre || "Tu nombre") + (p.email || p.telefono ? "\n" + [p.email, p.telefono].filter(Boolean).join(" · ") : ""));
+    return out.join("\n\n");
+  }
+  function renderLetter(text) {
+    $("carta").innerHTML = text.split(/\n\n/).map(function (par) { return "<p>" + esc(par) + "</p>"; }).join("");
+  }
+  function regenLetter() { state.carta = buildLetter(); renderLetter(state.carta); }
+
+  /* ---------- análisis ---------- */
+  function renderAnalysis() {
+    var host = $("analisis");
+    if (!A.terms.length) {
+      host.innerHTML = "<h3>Aún no hay oferta</h3><p>Pega el texto de la oferta en el formulario y aquí verás qué términos de ella ya aparecen en tu perfil.</p>";
+      return;
+    }
+    var total = A.terms.length, ok = A.matched.length, pct = Math.round(ok / total * 100);
+    var h = '<div><div class="big">' + pct + '%</div><p>Tu perfil cubre ' + ok + " de " + total + " términos clave de la oferta.</p></div>";
+    h += '<div class="meter" role="img" aria-label="Cobertura ' + pct + ' por ciento"><div style="width:' + pct + '%"></div></div>';
+    h += "<h3>Ya aparecen en tu perfil</h3>";
+    h += A.matched.length ? '<ul class="chips">' + A.matched.map(function (t) { return '<li class="chip hit">' + esc(t.label) + "</li>"; }).join("") + "</ul>" : "<p>Ninguno todavía.</p>";
+    h += "<h3>No aparecen en tu perfil</h3>";
+    if (A.missing.length) {
+      h += '<ul class="chips">' + A.missing.map(function (t) { return '<li class="chip miss">' + esc(t.label) + "</li>"; }).join("") + "</ul>";
+      h += "<p>Si de verdad tienes alguna, agrégala en tu experiencia o habilidades. La página nunca añade por su cuenta algo que no escribiste.</p>";
+    } else {
+      h += "<p>Tu perfil menciona todos los términos detectados.</p>";
+    }
+    host.innerHTML = h;
+  }
+
+  /* ---------- formulario ---------- */
+  function getPath(path) { var a = path.split("."); return state[a[0]][a[1]]; }
+  function setPath(path, v) { var a = path.split("."); state[a[0]][a[1]] = v; }
+  function fillForm() {
+    document.querySelectorAll("[data-bind]").forEach(function (el) { el.value = getPath(el.getAttribute("data-bind")) || ""; });
+    renderList("exp"); renderList("edu");
+    $("notice").hidden = !state.example;
+  }
+  function expTpl(i, it) {
+    return '<div class="rep-head"><span>Experiencia ' + (i + 1) + '</span><button class="btn small ghost" type="button" data-remove="exp" data-idx="' + i + '">Quitar</button></div>' +
+      '<div class="grid2">' +
+      '<label>Cargo<input id="exp-' + i + '-cargo" data-list="exp" data-idx="' + i + '" data-key="cargo" value="' + esc(it.cargo) + '"></label>' +
+      '<label>Empresa<input id="exp-' + i + '-empresa" data-list="exp" data-idx="' + i + '" data-key="empresa" value="' + esc(it.empresa) + '"></label>' +
+      '<label class="full">Periodo<input id="exp-' + i + '-periodo" data-list="exp" data-idx="' + i + '" data-key="periodo" value="' + esc(it.periodo) + '" placeholder="2022 - Actual"></label>' +
+      '<label class="full">Logros (uno por línea)<textarea id="exp-' + i + '-logros" data-list="exp" data-idx="' + i + '" data-key="logros" rows="4">' + esc(it.logros) + "</textarea></label></div>";
+  }
+  function eduTpl(i, it) {
+    return '<div class="rep-head"><span>Estudio ' + (i + 1) + '</span><button class="btn small ghost" type="button" data-remove="edu" data-idx="' + i + '">Quitar</button></div>' +
+      '<div class="grid2">' +
+      '<label>Título<input id="edu-' + i + '-titulo" data-list="edu" data-idx="' + i + '" data-key="titulo" value="' + esc(it.titulo) + '"></label>' +
+      '<label>Institución<input id="edu-' + i + '-institucion" data-list="edu" data-idx="' + i + '" data-key="institucion" value="' + esc(it.institucion) + '"></label>' +
+      '<label class="full">Periodo<input id="edu-' + i + '-periodo" data-list="edu" data-idx="' + i + '" data-key="periodo" value="' + esc(it.periodo) + '"></label></div>';
+  }
+  function renderList(kind) {
+    var host = $(kind + "-list"); host.innerHTML = "";
+    state[kind].forEach(function (it, i) {
+      var d = document.createElement("div"); d.className = "rep";
+      d.innerHTML = kind === "exp" ? expTpl(i, it) : eduTpl(i, it);
+      host.appendChild(d);
+    });
+  }
+  function refresh() { analyze(); renderCV(); renderAnalysis(); if (!state.cartaEdited) regenLetter(); save(); }
+
+  document.addEventListener("input", function (ev) {
+    var el = ev.target;
+    if (el.id === "carta" || el.closest("#carta")) { state.carta = $("carta").innerText; state.cartaEdited = true; save(); return; }
+    if (el.hasAttribute && el.hasAttribute("data-bind")) { setPath(el.getAttribute("data-bind"), el.value); refresh(); }
+    else if (el.hasAttribute && el.hasAttribute("data-list")) { state[el.getAttribute("data-list")][+el.getAttribute("data-idx")][el.getAttribute("data-key")] = el.value; refresh(); }
+  });
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest("button"); if (!t) return;
+    if (t.hasAttribute("data-remove")) {
+      var kind = t.getAttribute("data-remove"); state[kind].splice(+t.getAttribute("data-idx"), 1);
+      if (!state[kind].length) state[kind].push(kind === "exp" ? { cargo: "", empresa: "", periodo: "", logros: "" } : { titulo: "", institucion: "", periodo: "" });
+      renderList(kind); refresh();
+    } else if (t.hasAttribute("data-tab")) { setTab(t.getAttribute("data-tab")); }
+    else if (t.hasAttribute("data-pane")) { setPane(t.getAttribute("data-pane")); }
+  });
+  $("add-exp").addEventListener("click", function () { state.exp.push({ cargo: "", empresa: "", periodo: "", logros: "" }); renderList("exp"); var el = $("exp-" + (state.exp.length - 1) + "-cargo"); if (el) el.focus(); });
+  $("add-edu").addEventListener("click", function () { state.edu.push({ titulo: "", institucion: "", periodo: "" }); renderList("edu"); var el = $("edu-" + (state.edu.length - 1) + "-titulo"); if (el) el.focus(); });
+  $("btn-clear").addEventListener("click", function () { state = empty(); fillForm(); refresh(); });
+  $("btn-regen").addEventListener("click", function () { state.cartaEdited = false; regenLetter(); save(); toast("Carta redactada de nuevo"); });
+
+  function setTab(name) {
+    document.querySelectorAll("[data-tab]").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-tab") === name ? "true" : "false"); });
+    document.querySelectorAll(".panel").forEach(function (p) { p.classList.toggle("is-active", p.getAttribute("data-panel") === name); });
+  }
+  function setPane(name) {
+    $("app").setAttribute("data-pane", name);
+    document.querySelectorAll("[data-pane].btn").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-pane") === name ? "true" : "false"); });
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 1800);
+  }
+  function copyText(text) {
+    function fallback() {
+      var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta); toast(ok ? "Texto copiado" : "No se pudo copiar. Selecciona el texto a mano.");
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast("Texto copiado"); }, fallback);
+    } else { fallback(); }
+  }
+  $("btn-copy").addEventListener("click", function () {
+    var active = document.querySelector(".panel.is-active").getAttribute("data-panel");
+    if (active === "carta") copyText($("carta").innerText);
+    else if (active === "cv") copyText(cvText());
+    else toast("Abre la hoja de vida o la carta para copiar");
+  });
+  var pr = $("btn-print"); if (pr) pr.addEventListener("click", function () {
+    var active = document.querySelector(".panel.is-active").getAttribute("data-panel");
+    if (active === "analisis") setTab("cv");
+    window.print();
+  });
+
+  fillForm(); analyze(); renderCV(); renderAnalysis();
+  if (state.carta && state.cartaEdited) renderLetter(state.carta); else regenLetter();
+})();
+</script>
+</body>
+</html>
