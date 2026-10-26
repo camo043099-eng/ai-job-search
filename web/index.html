@@ -248,6 +248,17 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
           <div class="letter" id="carta" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Carta de presentación editable"></div>
         </div>
         <p style="margin:8px 0 0"><button class="btn small ghost" type="button" id="btn-regen">Redactar de nuevo</button></p>
+        <!--AI_START-->
+        <div class="card" style="margin-top:12px">
+          <h3 style="font-size:15px">Redactar con IA</h3>
+          <label style="flex-direction:row;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--muted)">
+            <input type="checkbox" id="ai-consent" style="width:auto;margin-top:3px">
+            <span>Autorizo enviar los datos de este formulario a Claude (Anthropic) solo para redactar mi carta. Esta página no los guarda.</span>
+          </label>
+          <div><button class="btn primary" type="button" id="btn-ai">Redactar con IA</button></div>
+          <p id="ai-status" role="status" style="margin:0;color:var(--muted);font-size:13px"></p>
+        </div>
+        <!--AI_END-->
       </div>
 
       <div class="panel" data-panel="analisis"><div class="card analysis" id="analisis"></div></div>
@@ -594,6 +605,25 @@ mark { background: var(--mark); color: var(--mark-ink); padding: 0 2px; border-r
     var active = document.querySelector(".panel.is-active").getAttribute("data-panel");
     if (active === "analisis") setTab("cv");
     window.print();
+  });
+
+  var aiBtn = $("btn-ai");
+  if (aiBtn) aiBtn.addEventListener("click", function () {
+    var st = $("ai-status");
+    if (!$("ai-consent").checked) { st.textContent = "Marca la autorización para continuar."; return; }
+    if (!(state.oferta.texto || "").trim()) { st.textContent = "Pega primero el texto de la oferta."; return; }
+    aiBtn.disabled = true; st.textContent = "Redactando...";
+    fetch("/api/redactar", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ perfil: state.perfil, exp: state.exp, edu: state.edu, oferta: state.oferta })
+    }).then(function (r) {
+      return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "No se pudo redactar."); return j; });
+    }).then(function (j) {
+      state.carta = j.carta; state.cartaEdited = true; renderLetter(j.carta); save();
+      st.textContent = "Carta lista. Puedes editarla.";
+    }).catch(function (e) {
+      st.textContent = e.message || "No se pudo redactar. Intenta de nuevo.";
+    }).then(function () { aiBtn.disabled = false; });
   });
 
   fillForm(); analyze(); renderCV(); renderAnalysis();
