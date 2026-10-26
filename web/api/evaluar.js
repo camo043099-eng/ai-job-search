@@ -3,7 +3,7 @@
 // Evalúa qué tan bien encaja una oferta con el perfil, siguiendo el marco de
 // .claude/skills/job-application-assistant/04-job-evaluation.md (adaptado a la página).
 
-const { cut, prepare, candidateBlock, offerBlock, askClaude } = require("./_lib");
+const { cut, prepare, candidateBlock, offerBlock, askAI } = require("./_lib");
 
 const SYSTEM = [
   "Eres un asesor de carrera que evalúa si una oferta de empleo encaja con un candidato. Escribes en español de Colombia.",
@@ -101,7 +101,7 @@ module.exports = async function handler(req, res) {
   const ctx = prepare(req, res);
   if (!ctx) return;
   const prompt = candidateBlock(ctx.body) + "\n\n" + offerBlock(ctx.body.oferta) + "\n\nEvalúa el encaje y responde solo con el JSON.";
-  const text = await askClaude(ctx.key, SYSTEM, prompt, 1400);
+  const text = await askAI(SYSTEM, prompt, 1400);
   const result = text ? shape(parseJson(text)) : null;
   if (!result) return res.status(502).json({ error: "No se pudo evaluar. Intenta de nuevo." });
   return res.status(200).json(result);

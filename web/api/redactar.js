@@ -1,10 +1,11 @@
 "use strict";
 
 // Función serverless (Vercel, Node). Variables de entorno:
-//   ANTHROPIC_API_KEY  (obligatoria)
-//   ANTHROPIC_MODEL    (opcional, por defecto claude-sonnet-5-5)
+//   ANTHROPIC_API_KEY o GEMINI_API_KEY  (al menos una)
+//   ANTHROPIC_MODEL / GEMINI_MODEL      (opcionales)
+//   AI_PROVIDER                         (opcional: "anthropic" o "gemini")
 
-const { prepare, candidateBlock, offerBlock, askClaude } = require("./_lib");
+const { prepare, candidateBlock, offerBlock, askAI } = require("./_lib");
 
 const SYSTEM = [
   "Eres un redactor de cartas de presentación en español de Colombia.",
@@ -20,7 +21,7 @@ module.exports = async function handler(req, res) {
   const ctx = prepare(req, res);
   if (!ctx) return;
   const prompt = candidateBlock(ctx.body) + "\n\n" + offerBlock(ctx.body.oferta) + "\n\nRedacta la carta de presentación.";
-  const carta = await askClaude(ctx.key, SYSTEM, prompt, 900);
+  const carta = await askAI(SYSTEM, prompt, 900);
   if (!carta) return res.status(502).json({ error: "No se pudo redactar. Intenta de nuevo." });
   return res.status(200).json({ carta });
 };

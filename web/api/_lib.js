@@ -30,8 +30,10 @@ function prepare(req, res) {
     try { ok = new URL(origin).host === req.headers.host; } catch (e) { ok = false; }
     if (!ok) { res.status(403).json({ error: "Origen no permitido" }); return null; }
   }
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) { res.status(500).json({ error: "Servicio no configurado" }); return null; }
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.GEMINI_API_KEY) {
+    res.status(500).json({ error: "Servicio no configurado" });
+    return null;
+  }
 
   const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
   if (limited(fwd || "desconocida")) {
@@ -49,7 +51,7 @@ function prepare(req, res) {
     res.status(413).json({ error: "El contenido es demasiado largo" });
     return null;
   }
-  return { body, key };
+  return { body };
 }
 
 function candidateBlock(b) {
@@ -91,12 +93,46 @@ function offerBlock(o) {
   return lines.join("\n");
 }
 
+// Elige el proveedor: AI_PROVIDER ("anthropic" o "gemini"); si no existe, el que tenga clave (Anthropic primero).
+function provider() {
+  const p = String(process.env.AI_PROVIDER || "").toLowerCase();
+  if (p === "gemini" && process.env.GEMINI_API_KEY) return "gemini";
+  if (p === "anthropic" && process.env.ANTHROPIC_API_KEY) return "anthropic";
+  return process.env.ANTHROPIC_API_KEY ? "anthropic" : "gemini";
+}
+
 // Devuelve el texto de la respuesta o null si falla.
-async function askClaude(key, system, prompt, maxTokens) {
+async function askAI(system, prompt, maxTokens) {
+  return provider() === "gemini" ? askGemini(system, prompt, maxTokens) : askClaude(system, prompt, maxTokens);
+}
+
+async function askGemini(system, prompt, maxTokens) {
+  try {
+    const model = process.env.GEMINI_MODEL || "gemini-4-argon";
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens * 3 } // deja margen por si el modelo razona antes de responder
+      })
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+    const text = parts.map((p) => p.text || "").join("").trim();
+    return text || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function askClaude(system, prompt, maxTokens) {
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      headers: { "content-type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
         max_tokens: maxTokens,
@@ -113,4 +149,4 @@ async function askClaude(key, system, prompt, maxTokens) {
   }
 }
 
-module.exports = { cut, prepare, candidateBlock, offerBlock, askClaude };
+module.exports = { cut, prepare, candidateBlock, offerBlock, askAI };

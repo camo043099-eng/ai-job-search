@@ -9,7 +9,10 @@ Página para adaptar una hoja de vida y una carta a una oferta de empleo.
 ## Publicar en Vercel
 
 1. Importa este repositorio en Vercel y fija **Root Directory** en `web`.
-2. Agrega la variable de entorno `ANTHROPIC_API_KEY` (opcional: `ANTHROPIC_MODEL`).
-3. En la consola de Anthropic fija un límite de gasto mensual para esa clave.
+2. Agrega una clave de IA como variable de entorno:
+   - Claude: `ANTHROPIC_API_KEY` (opcional: `ANTHROPIC_MODEL`).
+   - Gemini: `GEMINI_API_KEY` y `GEMINI_MODEL` con el nombre del modelo que elijas en Google AI Studio.
+   - Si agregas las dos, se usa Claude; para forzar otra, define `AI_PROVIDER` como `anthropic` o `gemini`.
+3. Fija un límite de gasto mensual en el proveedor que uses.
 
 Sin la función, el botón "Redactar con IA" muestra un error y el resto de la página sigue funcionando.
